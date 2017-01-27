@@ -14,4 +14,17 @@ public class MainTest {
 
         assertThat(tokens.size()).isEqualTo(100);
     }
+
+    @Test
+    public void getSingleTokenFromServer() {
+        int tokensAmount = 50;
+        int refreshTimeInMilisec = 1000;
+        TokenServer tokenServer = new TokenServer(tokensAmount,refreshTimeInMilisec);
+        tokenServer.start();
+        String token = tokenServer.getToken();
+
+        assertThat(token).isNotEmpty();
+        assertThat(tokenServer.getTokensAmount()).isEqualTo(tokensAmount-1);
+    }
+
 }
