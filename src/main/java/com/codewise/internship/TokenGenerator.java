@@ -10,7 +10,7 @@ class TokenGenerator {
         return UUID.randomUUID().toString();
     }
 
-    public List<String> generateTokens(int amount) {
+    List<String> generateTokens(int amount) {
         List<String> tokens = new ArrayList<String>();
         for (int i = 0 ; i < amount; i++ )
             tokens.add(generateToken());
