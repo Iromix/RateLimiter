@@ -1,12 +1,17 @@
 package com.codewise.internship;
 
-class Client {
+class Client extends Thread {
 
     private String token;
-
     private TokenServer tokenServer;
+
     Client(TokenServer tokenServer) {
         this.tokenServer = tokenServer;
+    }
+
+    @Override
+    public void run() {
+        getTokenPermissionFromServer();
     }
 
     void getTokenPermissionFromServer() {
@@ -19,7 +24,7 @@ class Client {
 
     void doSomething() {}
 
-    public String getToken() {
+    String getToken() {
         return token;
     }
 }
