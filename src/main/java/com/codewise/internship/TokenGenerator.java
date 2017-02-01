@@ -1,8 +1,8 @@
 package com.codewise.internship;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.LinkedBlockingDeque;
 
 class TokenGenerator {
 
@@ -10,8 +10,8 @@ class TokenGenerator {
         return UUID.randomUUID().toString();
     }
 
-    List<String> generateTokens(int amount) {
-        List<String> tokens = new ArrayList<String>();
+    BlockingDeque<String> generateTokens(int amount) {
+        BlockingDeque<String> tokens = new LinkedBlockingDeque<>();
         for (int i = 0 ; i < amount; i++ )
             tokens.add(generateToken());
         return tokens;
