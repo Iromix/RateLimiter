@@ -2,36 +2,64 @@ package com.codewise.internship;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
 
-class TokenServer {
+class TokenServer{
 
     private final int tokensAmount;
-    private final int refreshTimeInMilisec;
+    private final int refreshTimeInMillisec;
     private TokenGenerator tokenGenerator;
-    private List<String> tokens = new ArrayList<String>();
+    private BlockingDeque<String> tokens;
+    private ScheduledExecutorService executor;
 
-    TokenServer(int tokensAmount, int refreshTimeInMilisec)   {
+    TokenServer(int tokensAmount, int refreshTimeInMillisec) {
         this.tokensAmount = tokensAmount;
-        this.refreshTimeInMilisec = refreshTimeInMilisec;
+        this.refreshTimeInMillisec = refreshTimeInMillisec;
+        tokens = new LinkedBlockingDeque<>();
         tokenGenerator = new TokenGenerator();
     }
 
-    void start() {
-        refreshTokens();
+    synchronized void startServer() {
+        executor = Executors.newScheduledThreadPool(1);
+        Runnable refreshTask = () -> refreshTokens();
+        executor.scheduleAtFixedRate(refreshTask, 0, refreshTimeInMillisec, TimeUnit.MILLISECONDS);
     }
 
-    private void refreshTokens() {
+    synchronized void stopServer() {
+        System.out.println("trying to stop server...");
+        try {
+            executor.shutdown();
+            executor.awaitTermination(refreshTimeInMillisec, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            System.err.println("refresh token task interrupted");
+        } finally {
+            if (!executor.isTerminated())
+                System.err.println("cancel non-finished tasks");
+            executor.shutdownNow();
+            System.out.println("shutdown finished");
+        }
+    }
+
+    private synchronized void refreshTokens() {
         tokens = tokenGenerator.generateTokens(tokensAmount);
+        System.out.println("token resfreshed");
     }
 
-    String getToken() {
-        if (tokens.isEmpty())
-            return null;
-        else
-            return tokens.remove(tokens.size()-1);
+    synchronized String getToken() {
+        while (tokens.isEmpty()) {
+            System.out.println("pobieranie");
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        notifyAll();
+        return tokens.pollLast();
     }
 
-    int getTokensAmount(){
+    int getTokensAmount() {
         return tokens.size();
     }
 }
