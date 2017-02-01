@@ -2,7 +2,6 @@ package com.codewise.internship;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.BlockingDeque;
@@ -18,46 +17,39 @@ public class MainTest {
         assertThat(tokens.size()).isEqualTo(10);
     }
 
-    @Test
-    public void getSingleTokenFromServer() {
-        int tokensAmount = 100;
-        int refreshTimeInMillisec = 1000;
-        TokenServer tokenServer = new TokenServer(tokensAmount,refreshTimeInMillisec);
-        tokenServer.startServer();
-
-        String token = tokenServer.getToken();
-
-        tokenServer.stopServer();
-        assertThat(token).isNotEmpty();
-        assertThat(tokenServer.getTokensAmount()).isEqualTo(tokensAmount-1);
-    }
-
-    @Test
-    public void getTokenByClient() {
+    @Test(timeout = 2000)
+    public void getSingleTokenByClient() throws InterruptedException {
         TokenServer tokenServer = new TokenServer(10,1000);
         tokenServer.startServer();
         Client client = new Client(tokenServer);
 
-        client.getTokenPermissionFromServer();
+        client.start();
 
-        tokenServer.stopServer();
+//        get some time to consume token
+        Thread.sleep(1000);
         assertThat(client.getToken()).isNotEmpty();
+        tokenServer.stopServer();
     }
 
-    @Test
+    @Test(timeout = 2000)
     public void shouldRefreshTokensAfterSecond() throws InterruptedException {
         int tokensAmount = 10;
         int refreshTimeInMillisec = 1000;
         TokenServer tokenServer = new TokenServer(10,refreshTimeInMillisec);
 
         tokenServer.startServer();
-        tokenServer.getToken();
+        Thread getTokenThread = new Thread(tokenServer::getToken);
+        getTokenThread.start();
+
+        //should have one token less before nex refresh
+        Thread.sleep(refreshTimeInMillisec/2);
+        assertThat(tokenServer.getTokensAmount()).isEqualTo(tokensAmount-1);
         //TODO repalce sleep with custom Clock sleep!!!
         //        FakeClock clock = new FakeClock(Instant.now(), ZoneId.systemDefault());
-        Thread.sleep(refreshTimeInMillisec+1);
-
-        tokenServer.stopServer();
+        //should refresh tokens and have the sime amount of tokens
+        Thread.sleep(refreshTimeInMillisec/2+1);
         assertThat(tokenServer.getTokensAmount()).isEqualTo(tokensAmount);
+        tokenServer.stopServer();
     }
 
 }
