@@ -1,9 +1,6 @@
 package com.codewise.internship;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.ReentrantLock;
 
 class TokenServer{
 
@@ -44,11 +41,12 @@ class TokenServer{
     private synchronized void refreshTokens() {
         tokens = tokenGenerator.generateTokens(tokensAmount);
         System.out.println("token resfreshed");
+        notifyAll();
     }
 
     synchronized String getToken() {
         while (tokens.isEmpty()) {
-            System.out.println("pobieranie");
+            System.out.println("nie ma tokenow");
             try {
                 wait();
             } catch (InterruptedException e) {
