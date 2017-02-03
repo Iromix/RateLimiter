@@ -2,24 +2,27 @@ package com.codewise.internship;
 
 import java.util.concurrent.*;
 
-class TokenServer{
+class TokenServer {
 
     private final int tokensAmount;
     private final int refreshTimeInMillisec;
+    private Authenticator auth;
     private TokenGenerator tokenGenerator;
-    private BlockingDeque<String> tokens;
+    private BlockingDeque<String> availableTokens;
+
     private ScheduledExecutorService executor;
 
-    TokenServer(int tokensAmount, int refreshTimeInMillisec) {
+    TokenServer(int tokensAmount, int refreshTimeInMillisec, Authenticator auth) {
         this.tokensAmount = tokensAmount;
         this.refreshTimeInMillisec = refreshTimeInMillisec;
-        tokens = new LinkedBlockingDeque<>();
+        this.auth = auth;
+        availableTokens = new LinkedBlockingDeque<>();
         tokenGenerator = new TokenGenerator();
     }
 
     synchronized void startServer() {
         executor = Executors.newScheduledThreadPool(1);
-        Runnable refreshTask = () -> refreshTokens();
+        Runnable refreshTask = this::refreshTokens;
         executor.scheduleAtFixedRate(refreshTask, 0, refreshTimeInMillisec, TimeUnit.MILLISECONDS);
     }
 
@@ -39,13 +42,13 @@ class TokenServer{
     }
 
     private synchronized void refreshTokens() {
-        tokens = tokenGenerator.generateTokens(tokensAmount);
+        availableTokens = tokenGenerator.generateTokens(tokensAmount);
         System.out.println("token resfreshed");
         notifyAll();
     }
 
     synchronized String getToken() {
-        while (tokens.isEmpty()) {
+        while (availableTokens.isEmpty()) {
             System.out.println("nie ma tokenow");
             try {
                 wait();
@@ -53,11 +56,16 @@ class TokenServer{
                 e.printStackTrace();
             }
         }
+        String consumedToken = availableTokens.pollLast();
+        if (consumedToken != null)
+            auth.addToken(consumedToken);
         notifyAll();
-        return tokens.pollLast();
+        return consumedToken;
     }
 
     int getTokensAmount() {
-        return tokens.size();
+        return availableTokens.size();
     }
+
+
 }

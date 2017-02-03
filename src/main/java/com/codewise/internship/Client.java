@@ -3,9 +3,9 @@ package com.codewise.internship;
 class Client extends Thread {
 
     private String token;
-    private TokenServer tokenServer;
+    private Server tokenServer;
 
-    Client(TokenServer tokenServer) {
+    Client(Server tokenServer) {
         this.tokenServer = tokenServer;
     }
 
@@ -17,12 +17,12 @@ class Client extends Thread {
     void getTokenPermissionFromServer() {
         token = tokenServer.getToken();
 
-        System.out.println("get permission successfully token: " +  token);
+        System.out.println("client get successfully token: " +  token);
 
         doSomething();
     }
 
-    void doSomething() {}
+    private void doSomething() {}
 
     String getToken() {
         return token;
