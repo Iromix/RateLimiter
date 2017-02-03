@@ -1,4 +1,4 @@
-package com.codewise.internship;
+package com.codewise.internship.server;
 
 public class Server {
 
